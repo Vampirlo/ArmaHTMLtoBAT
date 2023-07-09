@@ -6,6 +6,10 @@ namespace ArmaHTMLtoBAT
     {
         static void Main(string[] args)
         {
+            //string path = @"D:\programs\SteamCMD\steamapps\workshop\content\107410\620019431";
+            //string lastPart = Path.GetFileName(path);
+            // string number = lastPart.Split("\\")[^1];
+
             string ArmaGameId = "107410";
 
             // получение пути arma.html. В данный момент находится в директории исполняемого файла
@@ -45,7 +49,7 @@ namespace ArmaHTMLtoBAT
                 string _str = _symbol.ToString();
 
                 if (_str.ToUpper() == "Y")
-                    Arma_methods.CreateBatFullPath(modname, SteamCMDLocation, profiles);
+                    Arma_methods.CreateBatFullPath(modID, SteamCMDLocation, profiles);
                 else if (_str.ToUpper() == "N")
                     Arma_methods.CreateBat(modname, profiles);
                 else
