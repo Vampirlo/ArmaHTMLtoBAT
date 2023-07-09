@@ -159,7 +159,6 @@ namespace ArmaHTMLtoBAT.tools
             return modname;
         }
 
-
         public static void SteamCMDDownload(List<string> modID, string SteamCMDLocation, string GameId, string Steamlogin, string SteamPassword)
         {
             string steamCmdPath = SteamCMDLocation + "/steamcmd.exe";
@@ -181,6 +180,21 @@ namespace ArmaHTMLtoBAT.tools
             steamCmdProcess.StartInfo.Arguments = arguments;
             steamCmdProcess.Start();
             steamCmdProcess.WaitForExit();
+        }
+        // передать в аргумент все моды разом
+        public static void SteamCMDDownloadMultipleMods(List<string> modID, string SteamCMDLocation, string GameId, string Steamlogin, string SteamPassword)
+        {
+            string steamCmdPath = SteamCMDLocation + "/steamcmd.exe";
+            string downloadCommand = string.Empty;
+            string arguments = string.Empty;
+            
+            for (int i = 0; i < modID.Count; i++)
+            {
+                downloadCommand += $"+workshop_download_item {GameId} {modID[i]} validate ";
+            }
+            arguments = $"+login {Steamlogin} {SteamPassword} {downloadCommand} +quit";
+
+            ExecuteCommand(steamCmdPath, arguments);
         }
     }
 }
