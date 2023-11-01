@@ -13,6 +13,7 @@ namespace ArmaHTMLtoBAT
             string Filepath = tools.tools.GetFilePath(FileName);
             List<string> modname = new List<string>();
             List<string> modID = new List<string>();
+            List<string> LocalModNames = new List<string>();
 
             // parameter initialization
             string iniFileName = "settings.ini";
@@ -26,6 +27,7 @@ namespace ArmaHTMLtoBAT
 
             modID = Arma_methods.GetModID(Filepath);
 
+            LocalModNames = Arma_methods.GetLocalModNameList(Filepath);
         notCorrectSymbol:
             Console.WriteLine("Need to create bat ?\n Y or N");
             
@@ -45,7 +47,7 @@ namespace ArmaHTMLtoBAT
                 string _str = _symbol.ToString();
 
                 if (_str.ToUpper() == "Y")
-                    Arma_methods.CreateBatFullPath(modID, SteamCMDLocation, profiles);
+                    Arma_methods.CreateBatFullPath(modID, SteamCMDLocation, profiles, LocalModNames);
                 else if (_str.ToUpper() == "N")
                     Arma_methods.CreateBat(modname, profiles);
                 else
@@ -55,8 +57,20 @@ namespace ArmaHTMLtoBAT
             }
             else if (str.ToUpper() == "N")
             {
-                //Arma_methods.SteamCMDDownload(modID, SteamCMDLocation, ArmaGameId, Steamlogin, SteamPassword);
-                Arma_methods.SteamCMDDownloadMultipleMods(modID, SteamCMDLocation, ArmaGameId, Steamlogin, SteamPassword);
+                Console.WriteLine("Validate ?\n Y or N");
+
+                ConsoleKeyInfo keyInfo_ = Console.ReadKey();
+                char symbol_ = keyInfo.KeyChar;
+                string str_ = symbol.ToString();
+
+                if (str.ToUpper() == "Y")
+                {
+                    Arma_methods.ValidateSteamCMDDownloadMultipleMods(modID, SteamCMDLocation, ArmaGameId, Steamlogin, SteamPassword);
+                }
+                else if (str.ToUpper() == "N")
+                {
+                    Arma_methods.SteamCMDDownloadMultipleMods(modID, SteamCMDLocation, ArmaGameId, Steamlogin, SteamPassword);
+                }
                 Environment.Exit(0);
             }
             goto notCorrectSymbol;

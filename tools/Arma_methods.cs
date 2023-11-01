@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Diagnostics;
 using System.IO;
+using System.Collections;
 
 namespace ArmaHTMLtoBAT.tools
 {
@@ -48,6 +49,40 @@ namespace ArmaHTMLtoBAT.tools
 
             return modname;
         }
+
+        public static List<string> GetLocalModNameList(string Filepath)
+        {
+            string line = String.Empty;
+            string[] splitstr;
+            string strForSubstring = string.Empty;
+            List<string> modname = new List<string>();
+
+            StreamReader reader = new StreamReader(Filepath);
+
+            while (!reader.EndOfStream)
+            {
+            invalidIndex:
+                // из-за проверки на "null" приходится вводить дополнительную, чтобы выйти из цикла
+                if (reader.EndOfStream)
+                    goto _endOfStream;
+                line = reader.ReadLine();
+                // строка может быть пуста и далее происходит исключительная ситуация. избегаем этого
+                if ((line == null))
+                    goto invalidIndex;
+                splitstr = line.Split("data-meta=\"local:");
+                if (splitstr.Length == 1)
+                    goto invalidIndex;
+
+                strForSubstring = splitstr[1];
+                strForSubstring = strForSubstring.Substring(0, splitstr[1].Length - 10);
+                modname.Add(strForSubstring.Insert(0, "@"));
+            }
+        _endOfStream:
+            reader.Close();
+
+            return modname;
+        }
+
         public static void CreateBat(List<string> modname, string profiles)
         {
             if (File.Exists("server" + modname.Count() + "mods.bat"))
@@ -70,7 +105,7 @@ namespace ArmaHTMLtoBAT.tools
         }
 
         // для создания батника с полным путём к модам (если используется SteamCMD)
-        public static void CreateBatFullPath(List<string> modID, string SteamCMDLocation, string profiles)
+        public static void CreateBatFullPath(List<string> modID, string SteamCMDLocation, string profiles, List<string> LocalModNames)
         {
             if (File.Exists("server" + modID.Count() + "mods.bat"))
                 File.Delete("server" + modID.Count() + "mods.bat");
@@ -100,6 +135,20 @@ namespace ArmaHTMLtoBAT.tools
                 if ((i) != (CurMods.Count - 1))
                     writer.Write(CurMods[i] + ";");
             }
+
+            if(LocalModNames.Count() != 0)
+            {
+                writer.Write(";");
+
+                for (int i = 0; i < LocalModNames.Count; i++)
+                {
+                    if ((i) == (LocalModNames.Count - 1))
+                        writer.Write(LocalModNames[i]);
+                    if ((i) != (LocalModNames.Count - 1))
+                        writer.Write(LocalModNames[i] + ";");
+                }
+            }
+
             writer.Write($"\" -port=2302 \"-profiles={profiles}\" -config=CONFIG_server.cfg -world=empty");
             writer.Close();
         }
@@ -178,6 +227,10 @@ namespace ArmaHTMLtoBAT.tools
             Process steamCmdProcess = new Process();
             steamCmdProcess.StartInfo.FileName = steamCmdPath;
             steamCmdProcess.StartInfo.Arguments = arguments;
+            //rentCacheSize == 0 
+            //src\clientdll\contentupdatecontext.cpp(752) : m_uIOCurrentCacheSize == 0
+            //CWorkThreadPool::~CWorkThreadPool: work complete queue not empty, 1 item discarded
+            steamCmdProcess.StartInfo.Verb = "runas"; // fix. maybe =(
             steamCmdProcess.Start();
             steamCmdProcess.WaitForExit();
         }
@@ -190,6 +243,23 @@ namespace ArmaHTMLtoBAT.tools
             
             for (int i = 0; i < modID.Count; i++)
             {
+                downloadCommand += $"+workshop_download_item {GameId} {modID[i]} validate ";
+            }
+            arguments = $"+login {Steamlogin} {SteamPassword} {downloadCommand} +quit";
+
+            ExecuteCommand(steamCmdPath, arguments);
+        }
+
+        public static void ValidateSteamCMDDownloadMultipleMods(List<string> modID, string SteamCMDLocation, string GameId, string Steamlogin, string SteamPassword)
+        {
+            string steamCmdPath = SteamCMDLocation + "/steamcmd.exe";
+            string downloadCommand = string.Empty;
+            string arguments = string.Empty;
+
+            for (int i = 0; i < modID.Count; i++)
+            {
+                downloadCommand += $"+workshop_download_item {GameId} {modID[i]} ";
+                downloadCommand += $"+workshop_download_item {GameId} {modID[i]} validate ";
                 downloadCommand += $"+workshop_download_item {GameId} {modID[i]} validate ";
             }
             arguments = $"+login {Steamlogin} {SteamPassword} {downloadCommand} +quit";
